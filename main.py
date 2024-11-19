@@ -1,43 +1,47 @@
-# https://github.com/tcstewar/ccmsuite/tree/master/tutorials
-
-# TRY OUT ONE EXAMPLE:
-from ccm.lib.actr import *
+import python_actr as actr
 
 
-class Addition(ACTR):
-    goal = Buffer()
-    retrieve = Buffer()
-    memory = Memory(retrieve)
+class TowerWorld(actr.Model):
+    goal = actr.Buffer()
+    retrieval = actr.Buffer()
+    dm = actr.Memory(retrieval)
 
-    def init():
-        memory.add('count 0 1')
-        memory.add('count 1 2')
-        memory.add('count 2 3')
-        memory.add('count 3 4')
-        memory.add('count 4 5')
-        memory.add('count 5 6')
-        memory.add('count 6 7')
-        memory.add('count 7 8')
+    towers = {'A': [], 'B': [], 'C': []}
 
-    def initializeAddition(goal='add ?num1 ?num2 count:None?count sum:None?sum'):
-        goal.modify(count=0, sum=num1)
-        memory.request('count ?num1 ?next')
+    def init(self):
+        self.towers = {'A': [3, 2, 1], 'B': [], 'C': []}
+        self.goal.set('source A dest C temp B disk 3')
 
-    def terminateAddition(goal='add ?num1 ?num2 count:?num2 sum:?sum'):
-        goal.set('result ?sum')
-        print sum
+    def print_towers(self):
+        print("Current Towers:")
+        for tower, disks in self.towers.items():
+            print(f"{tower}: {disks}")
+        print("")  # Add a new line for better readability
 
-    def incrementSum(goal='add ?num1 ?num2 count:?count!?num2 sum:?sum',
-                     retrieve='count ?sum ?next'):
-        goal.modify(sum=next)
-        memory.request('count ?count ?n2')
+    def move(self, source, dest, temp, disk):
+        if disk == 1:
+            print(f'Move disk 1 from {source} to {dest}')
+            self.towers[dest].append(self.towers[source].pop())
+            self.print_towers()
+            self.goal.set(f'source {source} dest {dest} temp {temp} disk 0')
+        else:
+            self.goal.set(f'source {source} dest {temp} temp {dest} disk {disk - 1}')
+            self.move(source, temp, dest, disk - 1)
+            print(f'Move disk {disk} from {source} to {dest}')
+            self.towers[dest].append(self.towers[source].pop())
+            self.print_towers()
+            self.move(temp, dest, source, disk - 1)
 
-    def incrementCount(goal='add ?num1 ?num2 count:?count sum:?sum',
-                       retrieve='count ?count ?next'):
-        goal.modify(count=next)
-        memory.request('count ?sum ?n2')
+    def production(self, source='A', dest='C', temp='B', disk='3'):
+        disk = int(disk)  # Ensure disk is an integer
+        if disk > 0:
+            self.move(source, dest, temp, disk)
+        else:
+            print('All moves complete')
 
 
-model = Addition()
-model.goal.set('add 5 2 count:None sum:None')
-model.run()
+model = TowerWorld()
+model.init()
+model.production()
+
+actr.run("production")
