@@ -21,17 +21,29 @@ class TowerEnvironment:
 
 
 class TowerModel(ACTR):
+    from itertools import permutations
     focus = Buffer()
     env = TowerEnvironment()
 
     def init():
         focus.set('do_action')
-    
+        focus.last_move = None
+
     def do_action(focus="do_action"):
-        possible_moves = [(from_, to) for from_ in ['A', 'B', 'C'] for to in ['A', 'B', 'C'] if from_ != to and getattr(env, from_)]
+        possible_moves = [(from_, to) for (from_, to) in permutations(['A', 'B', 'C'], 2)
+                            if (getattr(env, from_)           # If there is a disk on 'from' tower
+                                and (not getattr(env, to)
+                                     or getattr(env, to)[-1] > getattr(env, from_)[-1]
+                                     )  # and is a valid move (no disk or disk bellow is bigger)
+                                )]
         if possible_moves:
+            # Don't undo last move (unless its our only option)
+            if len(possible_moves) > 1 and focus.last_move:
+                reverse = focus.last_move[::-1]
+                possible_moves.remove(reverse)
             from_, to = random.choice(possible_moves)
             env.move_disk(from_, to)
+            focus.last_move = (from_, to)
         focus.set('check_if_done')
 
     def chech_if_done(focus="check_if_done"):
