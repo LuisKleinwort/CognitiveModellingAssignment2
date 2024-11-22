@@ -39,9 +39,9 @@ class TowerModel(ACTR):
                                 )]
         if possible_moves:
             # Don't undo last move (unless its our only option)
-            last_move_reversed = last_to, last_from
-            if len(possible_moves) > 1 and last_move_reversed in possible_moves:
-                possible_moves.remove(last_move_reversed)
+            for t in ["A", "B", "C"]:
+                if len(possible_moves) > 1 and (last_to, t) in possible_moves:
+                    possible_moves.remove((last_to, t))
             from_, to = random.choice(possible_moves)
             env.move_disk(from_, to)
             last_move.set(f"last_from:?from_ last_to:?to")
