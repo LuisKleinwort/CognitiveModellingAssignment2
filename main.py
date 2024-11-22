@@ -38,10 +38,14 @@ class TowerModel(ACTR):
                                      )  # and is a valid move (no disk or disk bellow is bigger)
                                 )]
         if possible_moves:
-            # Don't undo last move (unless its our only option)
-            for t in ["A", "B", "C"]:
-                if len(possible_moves) > 1 and (last_to, t) in possible_moves:
-                    possible_moves.remove((last_to, t))
+            # Don't use same peg twice in a row
+            for t in random.sample(["A", "B", "C"], 3):
+                if len(possible_moves) > 1:
+                    if (last_to, t) in possible_moves:
+                        possible_moves.remove((last_to, t))
+                else:
+                    pass # could not adhere to the heuristic
+
             from_, to = random.choice(possible_moves)
             env.move_disk(from_, to)
             last_move.set(f"last_from:?from_ last_to:?to")
