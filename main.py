@@ -23,12 +23,14 @@ class TowerEnvironment:
 class TowerModel(ACTR):
     from itertools import permutations
     focus = Buffer()
+    last_move = Buffer()
     env = TowerEnvironment()
 
     def init():
-        focus.set('do_action last_from:None last_to:None')
+        focus.set('do_action')
+        last_move.set("last_from:None last_to:None")
 
-    def do_action(focus="do_action last_from:?last_from last_to:?last_to"):
+    def do_action(focus="do_action", last_move="last_from:?last_from last_to:?last_to"):
         possible_moves = [(from_, to) for (from_, to) in permutations(['A', 'B', 'C'], 2)
                             if (getattr(env, from_)           # If there is a disk on 'from' tower
                                 and (not getattr(env, to)
@@ -37,20 +39,19 @@ class TowerModel(ACTR):
                                 )]
         if possible_moves:
             # Don't undo last move (unless its our only option)
-            last_move_reveresed = last_to, last_from
-            if len(possible_moves) > 1 and last_move_reveresed in possible_moves:
-                possible_moves.remove(last_move_reveresed)
+            last_move_reversed = last_to, last_from
+            if len(possible_moves) > 1 and last_move_reversed in possible_moves:
+                possible_moves.remove(last_move_reversed)
             from_, to = random.choice(possible_moves)
             env.move_disk(from_, to)
-            last_from = from_
-            last_to = to
-        focus.set('check_if_done last_from:?last_from last_to:?last_to')
+            last_move.set(f"last_from:?from_ last_to:?to")
+        focus.set('check_if_done')
 
-    def chech_if_done(focus="check_if_done last_from:?last_from last_to:?last_to"):
+    def check_if_done(focus="check_if_done"):
         if env.C == [3, 2, 1]:
             focus.set("finished")
         else:
-            focus.set("do_action last_from:?last_from last_to:?last_to")
+            focus.set("do_action")
 
 model = TowerModel()
 model.env = model.env
