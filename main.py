@@ -26,10 +26,9 @@ class TowerModel(ACTR):
     env = TowerEnvironment()
 
     def init():
-        focus.set('do_action')
-        focus.last_move = None
+        focus.set('do_action last_from:None last_to:None')
 
-    def do_action(focus="do_action"):
+    def do_action(focus="do_action last_from:?last_from last_to:?last_to"):
         possible_moves = [(from_, to) for (from_, to) in permutations(['A', 'B', 'C'], 2)
                             if (getattr(env, from_)           # If there is a disk on 'from' tower
                                 and (not getattr(env, to)
@@ -38,19 +37,20 @@ class TowerModel(ACTR):
                                 )]
         if possible_moves:
             # Don't undo last move (unless its our only option)
-            if len(possible_moves) > 1 and focus.last_move:
-                reverse = focus.last_move[::-1]
-                possible_moves.remove(reverse)
+            last_move_reveresed = last_to, last_from
+            if len(possible_moves) > 1 and last_move_reveresed in possible_moves:
+                possible_moves.remove(last_move_reveresed)
             from_, to = random.choice(possible_moves)
             env.move_disk(from_, to)
-            focus.last_move = (from_, to)
-        focus.set('check_if_done')
+            last_from = from_
+            last_to = to
+        focus.set('check_if_done last_from:?last_from last_to:?last_to')
 
-    def chech_if_done(focus="check_if_done"):
+    def chech_if_done(focus="check_if_done last_from:?last_from last_to:?last_to"):
         if env.C == [3, 2, 1]:
             focus.set("finished")
         else:
-            focus.set("do_action")
+            focus.set("do_action last_from:?last_from last_to:?last_to")
 
 model = TowerModel()
 model.env = model.env
